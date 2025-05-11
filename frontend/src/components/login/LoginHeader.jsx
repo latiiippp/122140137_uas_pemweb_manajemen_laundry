@@ -16,8 +16,8 @@ export default function LoginHeader() {
           <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
         </svg>
       </div>
-      <h1 className="text-3xl font-bold text-blue-800">Laundry Management</h1>
-      <p className="text-blue-600 mt-1">Login to your account</p>
+      <h1 className="text-3xl font-bold text-blue-800">Manajemen Laundry</h1>
+      <p className="text-blue-600 mt-1">Silakan login</p>
     </div>
   );
 }

@@ -55,7 +55,7 @@ export default function LoginForm({ onSubmit, error, loading }) {
           icon={userIcon}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter your username"
+          placeholder="Masukkan username"
         />
 
         <LoginInput
@@ -65,7 +65,7 @@ export default function LoginForm({ onSubmit, error, loading }) {
           icon={passwordIcon}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
+          placeholder="Masukkan password"
         />
 
         <LoginButton loading={loading} />

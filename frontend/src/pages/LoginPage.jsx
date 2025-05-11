@@ -41,7 +41,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center mt-6 text-blue-600">
-          <span className="text-sm">© 2023 Laundry Management System</span>
+          <span className="text-sm">© 2025 Manajemen Laundry</span>
         </p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Tambahkan import useEffect
 import { AuthContext } from "./context";
 
 // Dummy users for testing
@@ -33,9 +33,9 @@ export function AuthProvider({ children }) {
           setUser(userData);
           resolve(userData);
         } else {
-          reject(new Error("Invalid username or password"));
+          reject(new Error("Invalid credentials"));
         }
-      }, 800); // Simulate network delay
+      }, 800);
     });
   };
 
@@ -44,8 +44,8 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Check for existing user in localStorage on app load
-  useState(() => {
+  // PERBAIKAN: Ganti useState menjadi useEffect
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
