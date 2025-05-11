@@ -1,3 +1,5 @@
-# 122140137_uas_pemweb_manajemen_laundry
+# Manajemen Laundry
 
-## test push and pull
+## Deskripsi
+
+Aplikasi manajemen laundry berbasis web membantu pemilik usaha laundry untuk manajemen data pelanggan dan data pesanan.
