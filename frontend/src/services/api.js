@@ -9,9 +9,9 @@ const api = axios.create({
   },
 });
 
-// Add auth interceptor
+// Add auth interceptor - ubah localStorage menjadi sessionStorage
 api.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
   if (user?.token) {
     config.headers.Authorization = `Basic ${user.token}`;
   }

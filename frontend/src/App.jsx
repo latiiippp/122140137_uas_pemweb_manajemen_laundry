@@ -4,7 +4,8 @@ import DashboardPage from "./pages/DashboardPage";
 import OrdersPage from "./pages/OrdersPage";
 import UsersPage from "./pages/UsersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthProvider";
+import { OrderProvider } from "./context/OrderProvider";
 import { useAuth } from "./context/useAuth";
 
 function AppRoutes() {
@@ -45,8 +46,7 @@ function AppRoutes() {
         }
       />
       <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to="/dashboard" />} />{" "}
-      {/* Catch all other paths */}
+      <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
   );
 }
@@ -54,9 +54,13 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <OrderProvider>
+        {" "}
+        {/* Tambahkan OrderProvider di sini */}
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </OrderProvider>
     </AuthProvider>
   );
 }
