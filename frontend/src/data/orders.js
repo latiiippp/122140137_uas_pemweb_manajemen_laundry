@@ -18,7 +18,7 @@ export const RECENT_ORDERS = [
     service: "Setrika Saja",
     category: "kiloan",
     quantity: 2,
-    status: "menunggu diambil",
+    status: "siap ambil",
     entryDate: "2025-05-12",
     price: 20000,
     notes: "",

@@ -1,7 +1,7 @@
 // Status pesanan
 export const ORDER_STATUS = {
   PROCESSING: "sedang dilaundry",
-  READY: "menunggu diambil",
+  READY: "siap ambil",
   COMPLETED: "selesai",
 };
 

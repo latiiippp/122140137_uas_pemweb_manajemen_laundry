@@ -1,38 +1,43 @@
 import { ORDER_STATUS } from "../../data/constants";
 
 export default function StatusBadge({ status, onClick }) {
-  const getStatusLabel = () => {
+  const getStatusInfo = () => {
     switch (status) {
       case ORDER_STATUS.PROCESSING:
-        return "Dilaundry";
+        return {
+          label: "Sedang Dilaundry",
+          className: "bg-blue-100 text-blue-800",
+          searchTerms: ["sedang", "dilaundry", "proses"],
+        };
       case ORDER_STATUS.READY:
-        return "Siap Ambil";
+        return {
+          label: "Siap Ambil",
+          className: "bg-yellow-100 text-yellow-800",
+          searchTerms: ["siap", "ambil", "ready"],
+        };
       case ORDER_STATUS.COMPLETED:
-        return "Selesai";
+        return {
+          label: "Selesai",
+          className: "bg-green-100 text-green-800",
+          searchTerms: ["selesai", "done", "complete"],
+        };
       default:
-        return "Unknown";
+        return {
+          label: status || "Unknown",
+          className: "bg-gray-100 text-gray-800",
+          searchTerms: [],
+        };
     }
   };
 
-  const getStatusColor = () => {
-    switch (status) {
-      case ORDER_STATUS.PROCESSING:
-        return "bg-blue-100 text-blue-800";
-      case ORDER_STATUS.READY:
-        return "bg-yellow-100 text-yellow-800";
-      case ORDER_STATUS.COMPLETED:
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  const { label, className } = getStatusInfo();
 
   return (
     <span
       onClick={onClick}
-      className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full cursor-pointer hover:opacity-80 ${getStatusColor()}`}
+      className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full cursor-pointer hover:opacity-80 ${className}`}
     >
-      {getStatusLabel()}
+      {label}
     </span>
   );
 }
