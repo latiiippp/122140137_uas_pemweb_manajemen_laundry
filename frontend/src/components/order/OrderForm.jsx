@@ -21,10 +21,31 @@ export default function OrderForm({ isOpen, onClose }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Khusus untuk quantity, handle berdasarkan kategori
+    if (name === "quantity" && formData.category === "satuan") {
+      // Untuk kategori satuan
+      if (value === "") {
+        // Jika input kosong, biarkan kosong (untuk UX yang lebih baik)
+        setFormData((prev) => ({
+          ...prev,
+          [name]: "",
+        }));
+      } else {
+        // Jika ada nilai, pastikan bilangan bulat
+        const intValue = parseInt(value);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: isNaN(intValue) ? "" : intValue,
+        }));
+      }
+    } else {
+      // Untuk field lainnya tetap seperti semula
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -133,7 +154,7 @@ export default function OrderForm({ isOpen, onClose }) {
                     : "Masukkan jumlah (pcs)"
                 }
                 step={formData.category === "kiloan" ? "0.1" : "1"}
-                min="0.1"
+                min={formData.category === "kiloan" ? "0.1" : "1"} // Sesuaikan min juga
                 error={errors.quantity}
                 disabled={formData.category === "0"}
                 required

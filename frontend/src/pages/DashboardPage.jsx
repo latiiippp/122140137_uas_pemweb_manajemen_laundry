@@ -1,20 +1,56 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useOrders } from "../context/useOrder";
 import Sidebar from "../components/layout/Sidebar";
+import PageHeader from "../components/layout/PageHeader";
 import OrderForm from "../components/order/OrderForm";
 import StatisticsCards from "../components/dashboard/StatisticsCards";
-import RecentOrdersTable from "../components/dashboard/RecentOrdersTable";
-import { formatCurrency, formatDate } from "../utils/formatters";
+import OrdersTable from "../components/order/OrdersTable";
+import DeleteOrderModal from "../components/order/DeleteOrderModal";
+import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [orderFormOpen, setOrderFormOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   // Gunakan OrderContext
-  const { orders, getOrderStats } = useOrders();
+  const { orders, updateOrderStatus, deleteOrder, getOrderStats } = useOrders();
 
   // Dapatkan statistik dari OrderContext
   const { activeOrders, readyForPickup } = getOrderStats();
+
+  // Urutkan dan ambil 5 pesanan terbaru
+  const recentOrders = useMemo(() => {
+    return [...orders]
+      .sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate))
+      .slice(0, 5);
+  }, [orders]);
+
+  // Handler untuk konfirmasi update status
+  const handleUpdateStatus = (id, newStatus) => {
+    updateOrderStatus(id, newStatus);
+  };
+
+  // Handler untuk menampilkan form pesanan baru
+  const handleNewOrder = () => {
+    setOrderFormOpen(true);
+  };
+
+  // Handler untuk menampilkan dialog konfirmasi hapus
+  const handleOpenDeleteModal = (id) => {
+    setOrderToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  // Handler untuk konfirmasi hapus
+  const handleDeleteConfirm = () => {
+    if (orderToDelete) {
+      deleteOrder(orderToDelete);
+      setShowDeleteModal(false);
+      setOrderToDelete(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -26,30 +62,11 @@ export default function DashboardPage() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:ml-64">
-        {/* Header sederhana dengan tombol toggle saja */}
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <button
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              ></path>
-            </svg>
-          </button>
-          <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
-          {/* Tombol logout dihapus dari sini */}
-          <div className="w-6 h-6"></div> {/* Spacer untuk menjaga layout */}
-        </header>
+        {/* Header menggunakan komponen PageHeader */}
+        <PageHeader
+          title="Dashboard"
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="p-4">
           {/* Statistik kartu */}
@@ -58,13 +75,25 @@ export default function DashboardPage() {
             readyForPickup={readyForPickup}
           />
 
-          {/* Tabel pesanan terbaru dengan tombol buat pesanan */}
-          <RecentOrdersTable
-            orders={orders.slice(0, 5)} // Hanya 5 pesanan terbaru
-            formatCurrency={formatCurrency}
-            formatDate={formatDate}
-            onNewOrder={() => setOrderFormOpen(true)}
-          />
+          {/* Tabel pesanan terbaru menggunakan OrdersTable */}
+          <div className="mb-4">
+            <OrdersTable
+              orders={recentOrders}
+              onUpdateStatus={handleUpdateStatus}
+              onDeleteOrder={handleOpenDeleteModal}
+              onAddOrder={handleNewOrder}
+            />
+
+            {/* Link ke halaman orders */}
+            <div className="bg-white rounded-b-lg shadow px-4 py-3 border-t border-gray-200 text-right">
+              <Link
+                to="/orders"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Lihat semua pesanan →
+              </Link>
+            </div>
+          </div>
         </main>
       </div>
 
@@ -72,6 +101,13 @@ export default function DashboardPage() {
       <OrderForm
         isOpen={orderFormOpen}
         onClose={() => setOrderFormOpen(false)}
+      />
+
+      {/* Modal konfirmasi hapus */}
+      <DeleteOrderModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   );

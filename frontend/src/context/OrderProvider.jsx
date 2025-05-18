@@ -28,11 +28,28 @@ export function OrderProvider({ children }) {
     return orderWithId;
   };
 
+  const updateOrderNotes = (id, notes) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) => (order.id === id ? { ...order, notes } : order))
+    );
+  };
+
   // Fungsi untuk update status pesanan
   const updateOrderStatus = (id, newStatus) => {
+    const now = new Date().toISOString().split("T")[0];
+
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
-        order.id === id ? { ...order, status: newStatus } : order
+        order.id === id
+          ? {
+              ...order,
+              status: newStatus,
+              completionDate:
+                newStatus === ORDER_STATUS.COMPLETED
+                  ? now
+                  : order.completionDate,
+            }
+          : order
       )
     );
   };
@@ -60,6 +77,7 @@ export function OrderProvider({ children }) {
         orders,
         addOrder,
         updateOrderStatus,
+        updateOrderNotes, // Menambahkan fungsi updateOrderNotes ke value provider
         deleteOrder,
         getOrderStats,
       }}

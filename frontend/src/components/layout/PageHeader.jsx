@@ -1,9 +1,11 @@
-import React from "react";
-
-export default function DashboardHeader({ onToggleSidebar, onLogout }) {
+export default function PageHeader({ title, toggleSidebar }) {
   return (
     <header className="bg-white shadow p-4 flex justify-between items-center">
-      <button className="lg:hidden" onClick={onToggleSidebar}>
+      <button
+        className="lg:hidden"
+        onClick={toggleSidebar}
+        aria-label="Toggle Sidebar"
+      >
         <svg
           className="w-6 h-6"
           fill="none"
@@ -18,13 +20,8 @@ export default function DashboardHeader({ onToggleSidebar, onLogout }) {
           ></path>
         </svg>
       </button>
-      <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
-      <button
-        onClick={onLogout}
-        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
-      >
-        Logout
-      </button>
+      <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
+      <div className="w-6 h-6"></div> {/* Spacer untuk menjaga layout */}
     </header>
   );
 }
