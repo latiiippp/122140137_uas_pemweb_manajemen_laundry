@@ -6,6 +6,7 @@ import UsersPage from "./pages/UsersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
 import { OrderProvider } from "./context/OrderProvider";
+import { UserProvider } from "./context/UserProvider"; // Import UserProvider
 import { useAuth } from "./context/useAuth";
 
 function AppRoutes() {
@@ -55,11 +56,11 @@ function App() {
   return (
     <AuthProvider>
       <OrderProvider>
-        {" "}
-        {/* Tambahkan OrderProvider di sini */}
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <UserProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </UserProvider>
       </OrderProvider>
     </AuthProvider>
   );
