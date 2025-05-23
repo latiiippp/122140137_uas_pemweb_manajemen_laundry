@@ -1,0 +1,3 @@
+[run]
+source = manajemen_laundry
+omit = manajemen_laundry/test*
