@@ -4,6 +4,7 @@ from pyramid.paster import get_appsettings, setup_logging
 from sqlalchemy import engine_from_config
 
 from manajemen_laundry.models.meta import Base
+import manajemen_laundry.models
 
 config = context.config
 
