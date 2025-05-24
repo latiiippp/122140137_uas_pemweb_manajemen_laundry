@@ -1,4 +1,5 @@
 from pyramid.view import view_config
+from .auth import get_current_user_from_token
 from pyramid.response import Response
 from pyramid.httpexceptions import (
     HTTPCreated,
@@ -6,11 +7,12 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPBadRequest,
     HTTPForbidden,
+    HTTPUnauthorized
 )
 import transaction
 import math # Untuk math.ceil
 
-from ..models import Pesanan, Users # Sesuaikan jika path model berbeda
+from ..models import Pesanan, Users
 # Jika Anda memiliki fungsi untuk mendapatkan user yang sedang login (misalnya dari token)
 # from .auth import get_user_id_from_request # Contoh, sesuaikan dengan implementasi Anda
 
@@ -47,13 +49,14 @@ def hitung_harga(jenis_layanan, kategori_layanan, jumlah):
 
 @view_config(route_name='pesanan_add', request_method='POST', renderer='json')
 def pesanan_add_view(request):
-    # TODO: Tambahkan pengecekan role (hanya admin atau karyawan yang bisa tambah)
-    # user_id = get_user_id_from_request(request) # Contoh
-    # if not user_id:
-    #     return HTTPForbidden("Akses ditolak. Silakan login.")
-    # user = request.dbsession.query(Users).filter_by(id=user_id).first()
-    # if not user or user.role not in ['admin', 'karyawan']:
-    #    return HTTPForbidden("Anda tidak memiliki izin untuk menambahkan pesanan.")
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+
+    user_role = current_user_payload.get('role')
+    if user_role not in ['admin', 'karyawan']:
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk menambahkan pesanan.'})
 
     try:
         data = request.json_body
@@ -61,9 +64,8 @@ def pesanan_add_view(request):
         nomor_hp = data.get('nomor_hp')
         jenis_layanan = data.get('jenis_layanan')
         kategori_layanan = data.get('kategori_layanan')
-        jumlah_input = data.get('jumlah') # Ini adalah jumlah aktual yang diinput
+        jumlah_input = data.get('jumlah')
 
-        # Validasi input dasar
         if not all([nama_pelanggan, jenis_layanan, kategori_layanan, jumlah_input is not None]):
             return HTTPBadRequest("Data tidak lengkap: nama_pelanggan, jenis_layanan, kategori_layanan, dan jumlah diperlukan.")
         
@@ -74,21 +76,17 @@ def pesanan_add_view(request):
         except ValueError as e:
             return HTTPBadRequest(f"Format jumlah tidak valid: {e}")
 
-        # Hitung harga
         try:
             harga_total = hitung_harga(jenis_layanan, kategori_layanan, jumlah)
         except ValueError as e:
             return HTTPBadRequest(str(e))
 
-        # Buat objek Pesanan baru
-        # tanggal_masuk akan otomatis terisi oleh default=func.now() di model
-        # status akan otomatis 'dilaundry' oleh default di model
         pesanan_baru = Pesanan(
             nama_pelanggan=nama_pelanggan,
             nomor_hp=nomor_hp,
             jenis_layanan=jenis_layanan,
             kategori_layanan=kategori_layanan,
-            jumlah=jumlah, # Simpan jumlah aktual
+            jumlah=jumlah,
             harga=harga_total,
             catatan=data.get('catatan') 
         )
@@ -96,13 +94,10 @@ def pesanan_add_view(request):
         with transaction.manager:
             request.dbsession.add(pesanan_baru)
         
-        # Mengambil kembali pesanan dari DB untuk mendapatkan ID dan nilai default
-        # dan menggunakan to_dict() untuk serialisasi
-        request.dbsession.flush() # Memastikan ID tergenerate
+        request.dbsession.flush()
         return HTTPCreated(json_body=pesanan_baru.to_dict())
 
     except Exception as e:
-        # Log error di sini jika perlu
         # import logging
         # log = logging.getLogger(__name__)
         # log.error(f"Error saat menambahkan pesanan: {e}", exc_info=True)
