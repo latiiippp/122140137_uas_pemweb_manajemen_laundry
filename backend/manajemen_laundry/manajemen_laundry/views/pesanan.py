@@ -13,8 +13,6 @@ import transaction
 import math # Untuk math.ceil
 
 from ..models import Pesanan, Users
-# Jika Anda memiliki fungsi untuk mendapatkan user yang sedang login (misalnya dari token)
-# from .auth import get_user_id_from_request # Contoh, sesuaikan dengan implementasi Anda
 
 # --- Daftar Harga ---
 HARGA_KILOAN = {
@@ -106,13 +104,16 @@ def pesanan_add_view(request):
 
 @view_config(route_name='pesanan_list', request_method='GET', renderer='json')
 def pesanan_list_view(request):
-    # TODO : Tambahkan pengecekan role (admin atau karyawan)
-    # user_id = get_user_id_from_request(request) # Contoh
-    # if not user_id:
-    #     return HTTPForbidden("Akses ditolak. Silakan login.")
-    # user = request.dbsession.query(Users).filter_by(id=user_id).first()
-    # if not user or user.role not in ['admin', 'karyawan']:
-    #    return HTTPForbidden("Anda tidak memiliki izin untuk melihat daftar pesanan.")
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+
+    user_role = current_user_payload.get('role')
+
+    # Admin dan karyawan boleh melihat daftar pesanan
+    if user_role not in ['admin', 'karyawan']:
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengakses daftar pesanan.'})
 
     try:
         semua_pesanan = request.dbsession.query(Pesanan).order_by(Pesanan.tanggal_masuk.desc()).all()
@@ -124,8 +125,18 @@ def pesanan_list_view(request):
 
 @view_config(route_name='pesanan_detail', request_method='GET', renderer='json')
 def pesanan_detail_view(request):
-    # TODO: Tambahkan pengecekan role (admin atau karyawan)
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    
+    user_role = current_user_payload.get('role')
+
+    if user_role not in ['admin', 'karyawan']:
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengakses detail pesanan.'})
+
     pesanan_id = request.matchdict.get('id')
+
     try:
         pesanan = request.dbsession.query(Pesanan).filter_by(id=pesanan_id).first()
         if not pesanan:
@@ -136,7 +147,16 @@ def pesanan_detail_view(request):
 
 @view_config(route_name='pesanan_update', request_method='PUT', renderer='json')
 def pesanan_update_view(request):
-    # TODO: Tambahkan pengecekan role (admin atau karyawan)
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    
+    user_role = current_user_payload.get('role')
+
+    if user_role not in ['admin', 'karyawan']:
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk memperbarui pesanan.'})
+
     pesanan_id = request.matchdict.get('id')
     
     try:
@@ -214,7 +234,15 @@ def pesanan_update_view(request):
 
 @view_config(route_name='pesanan_delete', request_method='DELETE', renderer='json')
 def pesanan_delete_view(request):
-    # TODO: Tambahkan pengecekan role (admin atau karyawan)
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    
+    user_role = current_user_payload.get('role')
+    if user_role not in ['admin', 'karyawan']:
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk menghapus pesanan.'})
+    
     pesanan_id = request.matchdict.get('id')
     try:
         pesanan = request.dbsession.query(Pesanan).filter_by(id=pesanan_id).first()

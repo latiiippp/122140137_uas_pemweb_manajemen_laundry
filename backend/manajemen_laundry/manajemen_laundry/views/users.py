@@ -4,21 +4,42 @@ from pyramid.httpexceptions import (
     HTTPFound,
     HTTPNotFound,
     HTTPBadRequest,
+    HTTPOk,
+    HTTPCreated,
+    HTTPUnauthorized,
+    HTTPForbidden
 )
+import transaction
 from ..models import Users
+from passlib.hash import pbkdf2_sha256
+from .auth import get_current_user_from_token
 
 
 @view_config(route_name='users_list', renderer='json')
-def users_list(request):
+def users_list_view(request):
     """View untuk menampilkan daftar users"""
+    current_user_payload = get_current_user_from_token(request)
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+
+    user_role = current_user_payload.get('role')
+    if user_role != 'admin':
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengakses daftar pengguna.'})
     dbsession = request.dbsession
     users = dbsession.query(Users).all()
     return {'users': [u.to_dict() for u in users]} 
 
 
 @view_config(route_name='user_detail', renderer='json')
-def user_detail(request):
+def user_detail_view(request):
     """View untuk melihat detail satu user"""
+    current_user_payload = get_current_user_from_token(request)
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    user_role = current_user_payload.get('role')
+    if user_role != 'admin':
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengakses detail pengguna.'})
+    
     dbsession = request.dbsession
     user_id = request.matchdict['id']
     user = dbsession.query(Users).filter_by(id=user_id).first()
@@ -30,8 +51,16 @@ def user_detail(request):
 
 
 @view_config(route_name='user_add', request_method='POST', renderer='json')
-def user_add(request):
+def user_add_view(request):
     """View untuk menambahkan user baru"""
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    user_role = current_user_payload.get('role')
+    if user_role != 'admin':
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk menambahkan pengguna.'})
+    
     try:
         json_data = request.json_body
         
@@ -71,8 +100,15 @@ def user_add(request):
 
 
 @view_config(route_name='user_update', request_method='PUT', renderer='json')
-def user_update(request):
+def user_update_view(request):
     """View untuk mengupdate data user"""
+    current_user_payload = get_current_user_from_token(request)
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    user_role = current_user_payload.get('role')
+    if user_role != 'admin':
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengupdate pengguna.'})
+    
     dbsession = request.dbsession
     user_id = request.matchdict['id']
     
@@ -111,19 +147,39 @@ def user_update(request):
 
 
 @view_config(route_name='user_delete', request_method='DELETE', renderer='json')
-def user_delete(request):
-    """View untuk menghapus data user"""
-    dbsession = request.dbsession
-    user_id = request.matchdict['id']
-    
-    user = dbsession.query(Users).filter_by(id=user_id).first()
-    if user is None:
-        return HTTPNotFound(json_body={'error': 'User tidak ditemukan'})
-    
-    # Tidak mengizinkan user menghapus dirinya sendiri, atau role tertentu
-    if request.authenticated_userid == user.id:
-        return HTTPBadRequest(json_body={'error': 'Tidak dapat menghapus diri sendiri'})
+def user_delete_view(request):
+    """View untuk menghapus data user (hanya admin)"""
+    current_user_payload = get_current_user_from_token(request)
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
 
-    dbsession.delete(user)
+    user_role = current_user_payload.get('role')
     
-    return {'success': True, 'message': f'User dengan id {user_id} berhasil dihapus'}
+    if user_role != 'admin':
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk menghapus pengguna.'})
+
+    try:
+        user_id_to_delete = int(request.matchdict['id'])
+        
+        # Mencegah admin menghapus dirinya sendiri
+        if user_id_to_delete == current_user_payload.get('user_id'):
+            return HTTPForbidden(json_body={'error': 'Admin tidak dapat menghapus dirinya sendiri.'})
+
+        user_to_delete = request.dbsession.query(Users).filter_by(id=user_id_to_delete).first()
+        if user_to_delete is None:
+            return HTTPNotFound(json_body={'error': 'User tidak ditemukan'})
+        
+        # Mencegah penghapusan admin terakhir
+        if user_to_delete.role == 'admin':
+            admin_count = request.dbsession.query(Users).filter_by(role='admin').count()
+            if admin_count <= 1:
+                return HTTPForbidden(json_body={'error': 'Tidak dapat menghapus admin terakhir.'})
+
+        with transaction.manager:
+            request.dbsession.delete(user_to_delete)
+        
+        return HTTPOk(json_body={'success': True, 'message': f'User dengan ID {user_id_to_delete} berhasil dihapus'})
+    except ValueError:
+        return HTTPBadRequest(json_body={'error': 'ID User tidak valid.'})
+    except Exception as e:
+        return HTTPBadRequest(json_body={'error': f'Terjadi kesalahan saat menghapus user: {str(e)}'})
