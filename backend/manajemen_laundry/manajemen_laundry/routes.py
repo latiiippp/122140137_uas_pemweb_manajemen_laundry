@@ -1,19 +1,24 @@
 def includeme(config):
-    # Auth routes
-    config.add_route('login', '/login', request_method='POST')  # Endpoint untuk login
-    config.add_route('logout', '/logout', request_method='POST')  # Endpoint untuk logout
-
-    config.add_route('login_preflight', '/login', request_method='OPTIONS')
-
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
 
-    # Users routes dengan request_method untuk membedakan endpoint dengan URL yang sama
-    config.add_route('users_list', '/users', request_method='GET')
-    config.add_route('user_detail', '/users/{id}', request_method='GET')
-    config.add_route('user_add', '/users', request_method='POST')
-    config.add_route('user_update', '/users/{id}', request_method='PUT')
-    config.add_route('user_delete', '/users/{id}', request_method='DELETE')
+
+    # Rute untuk autentikasi
+    config.add_route('login', '/login', request_method='POST')
+    config.add_route('login_preflight', '/login', request_method='OPTIONS')
+    config.add_route('logout', '/logout', request_method='POST')
+    config.add_route('current_user_me', '/me', request_method='GET')
+    config.add_route('current_user_me_preflight', '/me', request_method='OPTIONS')
+
+
+    # Rute untuk Users
+    config.add_route('users_list', '/users', request_method='GET') # Untuk GET (fetchUsers)
+    config.add_route('user_add', '/users', request_method='POST') # Untuk POST (addUser)
+    config.add_route('users_preflight', '/users', request_method='OPTIONS')
+    config.add_route('user_detail', '/users/{user_id}', request_method='GET')
+    config.add_route('user_update', '/users/{user_id}', request_method='PUT')
+    config.add_route('user_delete', '/users/{user_id}', request_method='DELETE')
+    config.add_route('user_detail_preflight', '/users/{user_id}', request_method='OPTIONS')
 
     # Pesanan routes
     config.add_route('pesanan_list', '/pesanan', request_method='GET') # Mendapatkan semua pesanan

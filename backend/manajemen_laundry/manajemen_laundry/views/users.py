@@ -1,5 +1,6 @@
 import datetime # Mungkin tidak diperlukan lagi jika Users tidak punya tanggal
 from pyramid.view import view_config
+from pyramid.response import Response
 from pyramid.httpexceptions import (
     HTTPFound,
     HTTPNotFound,
@@ -41,7 +42,7 @@ def user_detail_view(request):
         return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengakses detail pengguna.'})
     
     dbsession = request.dbsession
-    user_id = request.matchdict['id']
+    user_id = request.matchdict['user_id']
     user = dbsession.query(Users).filter_by(id=user_id).first()
     
     if user is None:
@@ -110,7 +111,7 @@ def user_update_view(request):
         return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk mengupdate pengguna.'})
     
     dbsession = request.dbsession
-    user_id = request.matchdict['id']
+    user_id = request.matchdict['user_id']
     
     user = dbsession.query(Users).filter_by(id=user_id).first()
     if user is None:
@@ -159,7 +160,7 @@ def user_delete_view(request):
         return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk menghapus pengguna.'})
 
     try:
-        user_id_to_delete = int(request.matchdict['id'])
+        user_id_to_delete = int(request.matchdict['user_id'])
         
         # Mencegah admin menghapus dirinya sendiri
         if user_id_to_delete == current_user_payload.get('user_id'):
@@ -183,3 +184,15 @@ def user_delete_view(request):
         return HTTPBadRequest(json_body={'error': 'ID User tidak valid.'})
     except Exception as e:
         return HTTPBadRequest(json_body={'error': f'Terjadi kesalahan saat menghapus user: {str(e)}'})
+    
+@view_config(route_name='users_preflight', request_method='OPTIONS')
+def users_preflight_view(request):
+    """Menangani preflight OPTIONS request untuk /users."""
+    response = Response()
+    return response
+
+@view_config(route_name='user_detail_preflight', request_method='OPTIONS')
+def user_detail_preflight_view(request):
+    """Menangani preflight OPTIONS request untuk /users/{user_id}."""
+    response = Response()
+    return response
