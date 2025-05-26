@@ -54,7 +54,13 @@ def login_view(request):
         # log = logging.getLogger(__name__)
         # log.error(f"Error saat login: {e}", exc_info=True)
         return HTTPBadRequest(json_body={'message': f'Terjadi kesalahan: {str(e)}'})
-    
+
+@view_config(route_name='login_preflight', request_method='OPTIONS')
+def login_preflight(request):
+    response = Response()
+    # CORS headers akan ditambahkan oleh subscriber kita
+    return response
+
 def get_current_user_from_token(request):
     """
     Mengekstrak token JWT dari header Authorization, memverifikasinya,

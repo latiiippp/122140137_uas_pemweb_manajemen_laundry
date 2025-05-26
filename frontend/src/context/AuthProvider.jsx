@@ -1,60 +1,67 @@
 import { useState, useEffect } from "react";
 import { AuthContext } from "./authContext";
-import { DUMMY_USERS } from "../data/users";
+import api from "../services/api";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (credentials) => {
-    return new Promise((resolve, reject) => {
-      // Simulasi API delay
-      setTimeout(() => {
-        // Cari user yang cocok dari data terpisah
-        const matchedUser = DUMMY_USERS.find(
-          (u) =>
-            u.username === credentials.username &&
-            u.password === credentials.password
-        );
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem("token");
+    const storedUserDetails = sessionStorage.getItem("user_details");
+    if (storedToken && storedUserDetails) {
+      try {
+        setUser(JSON.parse(storedUserDetails));
+      } catch (e) {
+        console.error("Failed to parse user_details from sessionStorage", e);
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user_details");
+      }
+    }
+    setLoading(false);
+  }, []);
 
-        if (matchedUser) {
-          // Buat objek user tanpa password untuk keamanan
-          const userData = {
-            username: matchedUser.username,
-            role: matchedUser.role,
-          };
+  const login = async (credentials) => {
+    try {
+      setLoading(true);
+      const response = await api.post("/login", credentials);
+      const { token, user: userDetails } = response.data;
 
-          // Simpan di sessionStorage (bukan localStorage) dan state
-          sessionStorage.setItem("user", JSON.stringify(userData));
-          setUser(userData);
-          resolve(userData);
-        } else {
-          reject(new Error("Invalid credentials"));
-        }
-      }, 800);
-    });
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user_details", JSON.stringify(userDetails));
+      setUser(userDetails);
+      setLoading(false);
+      return userDetails;
+    } catch (error) {
+      setLoading(false);
+      console.error(
+        "Login failed:",
+        error.response?.data?.message || error.message
+      );
+      throw new Error(
+        error.response?.data?.message ||
+          "Login gagal. Periksa kembali username dan password Anda."
+      );
+    }
   };
 
   const logout = () => {
-    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user_details");
     setUser(null);
   };
 
-  // Auto login dari sessionStorage saat aplikasi dimuat
-  useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from sessionStorage", e);
-        sessionStorage.removeItem("user");
-      }
-    }
-  }, []);
-
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        loading,
+      }}
+    >
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

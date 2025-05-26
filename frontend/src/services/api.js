@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:6543/api";
+const API_URL = "http://localhost:6543";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,9 +11,9 @@ const api = axios.create({
 
 // Add auth interceptor - ubah localStorage menjadi sessionStorage
 api.interceptors.request.use((config) => {
-  const user = JSON.parse(sessionStorage.getItem("user"));
-  if (user?.token) {
-    config.headers.Authorization = `Basic ${user.token}`;
+  const token = sessionStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

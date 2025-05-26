@@ -1,4 +1,10 @@
 def includeme(config):
+    # Auth routes
+    config.add_route('login', '/login', request_method='POST')  # Endpoint untuk login
+    config.add_route('logout', '/logout', request_method='POST')  # Endpoint untuk logout
+
+    config.add_route('login_preflight', '/login', request_method='OPTIONS')
+
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
 
@@ -16,6 +22,3 @@ def includeme(config):
     config.add_route('pesanan_update', '/pesanan/{id}', request_method='PUT') # Memperbarui pesanan
     config.add_route('pesanan_delete', '/pesanan/{id}', request_method='DELETE') # Menghapus pesanan
 
-    # Auth routes
-    config.add_route('login', '/login', request_method='POST')  # Endpoint untuk login
-    config.add_route('logout', '/logout', request_method='POST')  # Endpoint untuk logout
