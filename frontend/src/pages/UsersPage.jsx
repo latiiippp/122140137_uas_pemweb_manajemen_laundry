@@ -20,15 +20,26 @@ export default function UsersPage() {
 
   // Fungsi untuk mencari dan mengurutkan users
   const filteredUsers = useMemo(() => {
-    // Filter berdasarkan kata kunci pencarian
-    return searchTerm
-      ? users.filter(
-          (user) =>
-            user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.role.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : users;
+    if (!Array.isArray(users)) return []; // Pastikan users adalah array
+    if (!searchTerm.trim()) {
+      // Jika searchTerm kosong, kembalikan semua user
+      return users;
+    }
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+
+    return users.filter((user) => {
+      // Pastikan semua field yang dicari ada dan merupakan string sebelum toLowerCase
+      const userIdString = user.id != null ? String(user.id).toLowerCase() : "";
+      const usernameString = user.username ? user.username.toLowerCase() : "";
+      const roleString = user.role ? user.role.toLowerCase() : "";
+
+      return (
+        userIdString.includes(lowerSearchTerm) ||
+        usernameString.includes(lowerSearchTerm) ||
+        roleString.includes(lowerSearchTerm)
+      );
+    });
   }, [users, searchTerm]);
 
   // Handler untuk menampilkan form dalam mode edit
@@ -96,14 +107,13 @@ export default function UsersPage() {
               <span>
                 Menampilkan {filteredUsers.length} hasil untuk "{searchTerm}"
               </span>
-              {filteredUsers.length > 0 && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  Reset
-                </button>
-              )}
+              {/* Tombol reset akan selalu tampil jika searchTerm tidak kosong */}
+              <button
+                onClick={() => setSearchTerm("")}
+                className="ml-2 text-blue-600 hover:text-blue-800"
+              >
+                Reset
+              </button>
             </div>
           )}
 

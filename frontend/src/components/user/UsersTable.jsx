@@ -54,9 +54,6 @@ export default function UsersTable({
                   Username
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Password Hash
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
@@ -73,9 +70,6 @@ export default function UsersTable({
                   <td className="px-3 py-2 text-xs text-gray-700">{user.id}</td>
                   <td className="px-3 py-2 text-xs text-gray-700">
                     {user.username}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-500 max-w-xs truncate">
-                    {user.password_hash}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <span
