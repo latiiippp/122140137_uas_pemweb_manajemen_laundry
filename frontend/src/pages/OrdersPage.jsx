@@ -36,16 +36,20 @@ export default function OrdersPage() {
       const phoneNumber = order.nomor_hp ? String(order.nomor_hp) : ""; // Nomor HP mungkin angka
       const status = order.status ? order.status.toLowerCase() : "";
       // Anda bisa menambahkan field lain untuk pencarian jika perlu
-      // const kategoriLayanan = order.kategori_layanan ? order.kategori_layanan.toLowerCase() : "";
-      // const jenisLayanan = order.jenis_layanan ? order.jenis_layanan.toLowerCase() : "";
+      const kategoriLayanan = order.kategori_layanan
+        ? order.kategori_layanan.toLowerCase()
+        : "";
+      const jenisLayanan = order.jenis_layanan
+        ? order.jenis_layanan.toLowerCase()
+        : "";
 
       return (
         orderIdString.includes(lowerSearchTerm) ||
         customerName.includes(lowerSearchTerm) ||
         phoneNumber.includes(searchTerm) || // Untuk nomor HP, mungkin tidak perlu toLowerCase
-        status.includes(lowerSearchTerm)
-        // || kategoriLayanan.includes(lowerSearchTerm)
-        // || jenisLayanan.includes(lowerSearchTerm)
+        status.includes(lowerSearchTerm) ||
+        kategoriLayanan.includes(lowerSearchTerm) ||
+        jenisLayanan.includes(lowerSearchTerm)
       );
     });
 

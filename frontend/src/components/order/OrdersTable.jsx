@@ -130,7 +130,13 @@ export default function OrdersTable({
                   </td>
                   <td className="px-3 py-2 text-xs text-gray-700">
                     <div>
-                      <div>{order.jenis_layanan}</div>
+                      <div>
+                        {order.jenis_layanan == "cuci_setrika"
+                          ? "Cuci + Setrika"
+                          : order.jenis_layanan == "cuci_saja"
+                          ? "Cuci Saja"
+                          : "Setrika Saja"}
+                      </div>
                       <div className="text-gray-500">
                         {order.kategori_layanan === "kiloan"
                           ? "Kiloan"
