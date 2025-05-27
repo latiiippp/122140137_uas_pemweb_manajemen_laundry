@@ -20,7 +20,7 @@ export default function StatusEditor({
           },
           {
             value: ORDER_STATUS.READY,
-            label: "Siap Ambil",
+            label: "Siap Diambil",
           },
           {
             value: ORDER_STATUS.COMPLETED,

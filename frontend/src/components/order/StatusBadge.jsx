@@ -5,13 +5,13 @@ export default function StatusBadge({ status, onClick }) {
     switch (status) {
       case ORDER_STATUS.PROCESSING:
         return {
-          label: "Sedang Dilaundry",
+          label: "Dilaundry",
           className: "bg-blue-100 text-blue-800",
           searchTerms: ["sedang", "dilaundry", "proses"],
         };
       case ORDER_STATUS.READY:
         return {
-          label: "Siap Ambil",
+          label: "Siap Diambil",
           className: "bg-yellow-100 text-yellow-800",
           searchTerms: ["siap", "ambil", "ready"],
         };
