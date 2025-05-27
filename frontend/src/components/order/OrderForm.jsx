@@ -9,12 +9,12 @@ import { CATEGORY_OPTIONS, SERVICE_OPTIONS } from "../../data/constants";
 
 export default function OrderForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
-    customerName: "",
-    phoneNumber: "",
-    category: "0",
-    serviceType: "0",
-    quantity: "",
-    notes: "",
+    nama_pelanggan: "",
+    nomor_hp: "",
+    kategori_layanan: "0",
+    jenis_layanan: "0",
+    jumlah_aktual: "",
+    catatan: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -23,7 +23,7 @@ export default function OrderForm({ isOpen, onClose }) {
     const { name, value } = e.target;
 
     // Khusus untuk quantity, handle berdasarkan kategori
-    if (name === "quantity" && formData.category === "satuan") {
+    if (name === "jumlah_aktual" && formData.kategori_layanan === "satuan") {
       // Untuk kategori satuan
       if (value === "") {
         // Jika input kosong, biarkan kosong (untuk UX yang lebih baik)
@@ -65,9 +65,9 @@ export default function OrderForm({ isOpen, onClose }) {
 
   // Label dinamis untuk field jumlah
   const quantityLabel =
-    formData.category === "kiloan"
+    formData.kategori_layanan === "kiloan"
       ? "Jumlah (kg)"
-      : formData.category === "satuan"
+      : formData.kategori_layanan === "satuan"
       ? "Jumlah (pcs)"
       : "Jumlah";
 
@@ -101,62 +101,62 @@ export default function OrderForm({ isOpen, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <FormInput
-                id="customerName"
+                id="nama_pelanggan"
                 label="Nama Pelanggan"
-                value={formData.customerName}
+                value={formData.nama_pelanggan}
                 onChange={handleChange}
                 placeholder="Masukkan nama pelanggan"
-                error={errors.customerName}
+                error={errors.nama_pelanggan}
                 required
               />
 
               <FormInput
-                id="phoneNumber"
+                id="nomor_hp"
                 label="Nomor HP"
-                value={formData.phoneNumber}
+                value={formData.nomor_hp}
                 onChange={handleChange}
                 placeholder="Masukkan nomor HP"
-                error={errors.phoneNumber}
+                error={errors.nomor_hp}
                 required
               />
 
               <FormSelect
-                id="category"
+                id="kategori_layanan"
                 label="Kategori Layanan"
-                value={formData.category}
+                value={formData.kategori_layanan}
                 onChange={handleChange}
                 options={CATEGORY_OPTIONS}
-                error={errors.category}
+                error={errors.kategori_layanan}
                 required
               />
             </div>
 
             <div className="space-y-4">
               <FormSelect
-                id="serviceType"
+                id="jenis_layanan"
                 label="Jenis Layanan"
-                value={formData.serviceType}
+                value={formData.jenis_layanan}
                 onChange={handleChange}
                 options={SERVICE_OPTIONS}
-                error={errors.serviceType}
+                error={errors.jenis_layanan}
                 required
               />
 
               <FormInput
-                id="quantity"
+                id="jumlah_aktual"
                 label={quantityLabel}
                 type="number"
-                value={formData.quantity}
+                value={formData.jumlah_aktual}
                 onChange={handleChange}
                 placeholder={
-                  formData.category === "kiloan"
+                  formData.kategori_layanan === "kiloan"
                     ? "Masukkan berat (kg)"
                     : "Masukkan jumlah (pcs)"
                 }
-                step={formData.category === "kiloan" ? "0.1" : "1"}
-                min={formData.category === "kiloan" ? "0.1" : "1"} // Sesuaikan min juga
-                error={errors.quantity}
-                disabled={formData.category === "0"}
+                step={formData.kategori_layanan === "kiloan" ? "0.1" : "1"}
+                min={formData.kategori_layanan === "kiloan" ? "0.1" : "1"} // Sesuaikan min juga
+                error={errors.jumlah_aktual}
+                disabled={formData.kategori_layanan === "0"}
                 required
               />
             </div>
@@ -164,9 +164,9 @@ export default function OrderForm({ isOpen, onClose }) {
 
           <div className="mt-6">
             <FormTextarea
-              id="notes"
+              id="catatan"
               label="Catatan (Opsional)"
-              value={formData.notes}
+              value={formData.catatan}
               onChange={handleChange}
               placeholder="Tambahkan catatan atau instruksi khusus"
             />

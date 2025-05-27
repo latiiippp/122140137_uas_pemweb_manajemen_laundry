@@ -97,7 +97,7 @@ def pesanan_add_view(request):
 
     except Exception as e:
         # import logging
-        # log = logging.getLogger(__name__)
+        # log = logging.getLogger(_name_)
         # log.error(f"Error saat menambahkan pesanan: {e}", exc_info=True)
         return HTTPBadRequest(f"Terjadi kesalahan: {e}")
 
@@ -227,7 +227,7 @@ def pesanan_update_view(request):
 
     except Exception as e:
         # import logging
-        # log = logging.getLogger(__name__)
+        # log = logging.getLogger(_name_)
         # log.error(f"Error saat update pesanan {pesanan_id}: {e}", exc_info=True)
         return HTTPBadRequest(f"Terjadi kesalahan saat memperbarui pesanan: {e}")
 
@@ -255,3 +255,15 @@ def pesanan_delete_view(request):
         return HTTPOk(json_body={'message': f'Pesanan dengan ID {pesanan_id} berhasil dihapus'})
     except Exception as e:
         return HTTPBadRequest(f"Terjadi kesalahan saat menghapus pesanan: {e}")
+    
+@view_config(route_name='pesanan_preflight', request_method='OPTIONS')
+def pesanan_preflight_view(request):
+    """Menangani preflight OPTIONS request untuk /pesanan."""
+    response = Response()
+    return response
+
+@view_config(route_name='pesanan_detail_preflight', request_method='OPTIONS')
+def pesanan_detail_preflight_view(request):
+    """Menangani preflight OPTIONS request untuk /pesanan/{id}."""
+    response = Response()
+    return response

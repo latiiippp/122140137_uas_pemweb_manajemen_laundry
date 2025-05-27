@@ -1,22 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
-import { UserContext } from "./userContext";
+import { useState, useEffect, useCallback, useContext } from "react";
 import api from "../services/api";
-
-// Provider component
+import { AuthContext } from "./authContext";
+import { UserContext } from "./userContext";
 export function UserProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true); // Untuk loading awal
   const [error, setError] = useState(null); // Untuk menangani error API
+  const { token: authToken } = useContext(AuthContext);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.get("/users");
-      setUsers(response.data.users || []);
+      setUsers(response.data.users || response.data || []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
-      setError(err.response?.data?.message || "Gagal mengambil data pengguna.");
+      if (err.response?.status !== 401) {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Gagal mengambil data pengguna."
+        );
+      }
       setUsers([]);
     } finally {
       setLoading(false);
@@ -24,19 +30,27 @@ export function UserProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    const tokenToUse = authToken || sessionStorage.getItem("token");
 
-  // Fungsi untuk menambah pengguna baru
+    if (tokenToUse) {
+      fetchUsers();
+    } else {
+      setLoading(false);
+      setUsers([]);
+    }
+  }, [fetchUsers, authToken]);
+
   const addUser = async (userData) => {
     setError(null);
     try {
       const response = await api.post("/users", userData);
-      fetchUsers();
+      await fetchUsers();
       return response.data;
     } catch (err) {
       console.error("Failed to add user:", err);
-      setError(err.response?.data?.message || "Gagal menambah pengguna.");
+      setError(
+        err.response?.data?.message || err.message || "Gagal menambah pengguna."
+      );
       throw err;
     }
   };
@@ -45,7 +59,7 @@ export function UserProvider({ children }) {
   const updateUser = async (userId, updatedData) => {
     setError(null);
     try {
-      const response = await api.put(`/users/${userId}`, updatedData); //
+      const response = await api.put(`/users/${userId}`, updatedData);
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
           user.id === userId
@@ -56,7 +70,11 @@ export function UserProvider({ children }) {
       return response.data;
     } catch (err) {
       console.error("Failed to update user:", err);
-      setError(err.response?.data?.message || "Gagal memperbarui pengguna.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Gagal memperbarui pengguna."
+      );
       throw err;
     }
   };
@@ -66,10 +84,15 @@ export function UserProvider({ children }) {
     setError(null);
     try {
       await api.delete(`/users/${userId}`);
+      // Hapus user dari state secara manual
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
     } catch (err) {
       console.error("Failed to delete user:", err);
-      setError(err.response?.data?.message || "Gagal menghapus pengguna.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Gagal menghapus pengguna."
+      );
       throw err;
     }
   };

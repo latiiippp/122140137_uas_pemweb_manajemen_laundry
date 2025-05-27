@@ -24,8 +24,10 @@ export default function OrdersPage() {
       ? orders.filter(
           (order) =>
             order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.nama_pelanggan
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            order.nomor_hp.toLowerCase().includes(searchTerm.toLowerCase()) ||
             order.status.toLowerCase().includes(searchTerm.toLowerCase())
         )
       : orders;
