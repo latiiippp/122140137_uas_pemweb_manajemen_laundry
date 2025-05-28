@@ -1,9 +1,116 @@
+import React, { useState, useMemo } from "react"; // Tambahkan useState dan useMemo
+
+const ITEMS_PER_PAGE = 5; // Jumlah item per halaman
+
 export default function UsersTable({
   users,
   onUpdateUser,
   onDeleteUser,
   onAddUser,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Paginasi data
+  const currentTableData = useMemo(() => {
+    const firstPageIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const lastPageIndex = firstPageIndex + ITEMS_PER_PAGE;
+    return users.slice(firstPageIndex, lastPageIndex);
+  }, [users, currentPage]);
+
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo(0, 0); // Scroll ke atas
+    }
+  };
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 3; // Jumlah tombol halaman yang terlihat di sekitar halaman aktif
+
+    if (totalPages <= 1) return null;
+
+    pageNumbers.push(1);
+
+    if (totalPages > maxVisiblePages + 2) {
+      if (currentPage > maxVisiblePages - 1 && maxVisiblePages > 1) {
+        if (currentPage > 2 && totalPages > 3) pageNumbers.push("...");
+      }
+
+      let startPage = Math.max(
+        2,
+        currentPage - Math.floor((maxVisiblePages - 1) / 2)
+      );
+      let endPage = Math.min(
+        totalPages - 1,
+        currentPage + Math.floor(maxVisiblePages / 2)
+      );
+
+      if (
+        maxVisiblePages === 1 &&
+        currentPage > 1 &&
+        currentPage < totalPages
+      ) {
+        startPage = currentPage;
+        endPage = currentPage;
+      } else {
+        if (currentPage < maxVisiblePages && maxVisiblePages > 1) {
+          endPage = Math.min(totalPages - 1, maxVisiblePages);
+        }
+        if (
+          currentPage > totalPages - maxVisiblePages + 1 &&
+          maxVisiblePages > 1
+        ) {
+          startPage = Math.max(2, totalPages - maxVisiblePages);
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        if (i !== 1 && i !== totalPages) {
+          pageNumbers.push(i);
+        }
+      }
+      if (currentPage < totalPages - maxVisiblePages && maxVisiblePages > 1) {
+        if (currentPage < totalPages - 1 && totalPages > 3)
+          pageNumbers.push("...");
+      }
+    } else {
+      for (let i = 2; i < totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    }
+    if (totalPages > 1) {
+      pageNumbers.push(totalPages);
+    }
+    const uniquePageNumbers = [...new Set(pageNumbers)];
+
+    return uniquePageNumbers.map((number, index) =>
+      number === "..." ? (
+        <span
+          key={`ellipsis-${index}`}
+          className="px-3 py-1.5 sm:px-4 sm:py-2 text-gray-700"
+        >
+          ...
+        </span>
+      ) : (
+        <button
+          key={number}
+          onClick={() => handlePageChange(number)}
+          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors
+            ${
+              currentPage === number
+                ? "bg-blue-500 text-white border-blue-500"
+                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+            }`}
+        >
+          {number}
+        </button>
+      )
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
@@ -15,13 +122,14 @@ export default function UsersTable({
         <div>
           <button
             onClick={onAddUser}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors text-sm"
           >
             <svg
               className="w-5 h-5 mr-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
@@ -40,93 +148,123 @@ export default function UsersTable({
           Tidak ada user yang ditemukan
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                  No
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Username
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user, index) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900">
-                    {index + 1}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">{user.id}</td>
-                  <td className="px-3 py-2 text-xs text-gray-700">
-                    {user.username}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                        user.role === "admin"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs flex space-x-2">
-                    <button
-                      onClick={() => onUpdateUser(user)}
-                      className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
-                      title="Edit User"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => onDeleteUser(user.id)}
-                      className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                      title="Hapus User"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    No
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Username
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    Aksi
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentTableData.map((user, index) => {
+                  const itemNumber =
+                    (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                  return (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900">
+                        {itemNumber}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-700">
+                        {user.id}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-700">
+                        {user.username}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                            user.role === "admin"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs flex space-x-2">
+                        <button
+                          onClick={() => onUpdateUser(user)}
+                          className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                          title="Edit User"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => onDeleteUser(user.id)}
+                          className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                          title="Hapus User"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* Kontrol Pagination */}
+          {totalPages > 1 && (
+            <div className="py-3 px-4 sm:px-6 flex items-center justify-between border-t border-gray-200">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sebelumnya
+              </button>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                {renderPageNumbers()}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Berikutnya
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,17 +1,18 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import SearchBar from "../components/order/SearchBar"; // Pastikan path ini benar
-import StatusBadge from "../components/order/StatusBadge"; // Pastikan path ini benar
+import SearchBar from "../components/order/SearchBar";
+import StatusBadge from "../components/order/StatusBadge";
 import api from "../services/api";
+import { formatCurrency } from "../utils/formatters"; // Pastikan path ini benar
 
-const ORDERS_PER_PAGE = 5; // Jumlah pesanan per halaman
+const ORDERS_PER_PAGE = 5;
 
 export default function LandingPage() {
-  const [landingOrders, setLandingOrders] = useState([]); // Semua data dari API
+  const [landingOrders, setLandingOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1); // State untuk halaman saat ini
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchPublicOrders = async () => {
@@ -19,11 +20,9 @@ export default function LandingPage() {
       setError(null);
       setCurrentPage(1); // Reset ke halaman pertama setiap kali fetch
       try {
-        // Pastikan endpoint ini mengembalikan SEMUA data yang diinginkan (tanpa limit di backend)
-        const response = await api.get("/orders");
-        // Urutkan data jika perlu, misal berdasarkan ID atau tanggal terbaru
+        const response = await api.get("/orders"); // Endpoint untuk public orders
         const sortedData = (response.data || []).sort(
-          (a, b) => (b.id || 0) - (a.id || 0) // Contoh pengurutan berdasarkan ID descending
+          (a, b) => (b.id || 0) - (a.id || 0)
         );
         setLandingOrders(sortedData);
       } catch (err) {
@@ -40,7 +39,7 @@ export default function LandingPage() {
     };
 
     fetchPublicOrders();
-  }, []); // Hanya fetch saat komponen mount
+  }, []);
 
   const formatStatusDisplay = (statusValue) => {
     if (!statusValue) return "N/A";
@@ -64,14 +63,13 @@ export default function LandingPage() {
     }
   };
 
-  // 1. Filter data berdasarkan searchTerm
   const filteredLandingOrders = useMemo(() => {
     if (!searchTerm.trim()) {
       return landingOrders;
     }
     const lowerSearchTerm = searchTerm.toLowerCase();
     return landingOrders.filter((order) => {
-      const nomorUrutString = String(order.nomor_urut || "").toLowerCase();
+      const nomorUrutString = String(order.nomor_urut || "").toLowerCase(); // Jika ada nomor urut
       const namaPelangganString = order.nama_pelanggan
         ? order.nama_pelanggan.toLowerCase()
         : "";
@@ -87,6 +85,8 @@ export default function LandingPage() {
       const statusString = order.status
         ? formatStatusDisplay(order.status).toLowerCase()
         : "";
+      const jumlahString = String(order.jumlah || "").toLowerCase();
+      const hargaString = String(order.harga || "").toLowerCase();
 
       return (
         nomorUrutString.includes(lowerSearchTerm) ||
@@ -94,17 +94,17 @@ export default function LandingPage() {
         nomorHpString.includes(lowerSearchTerm) ||
         kategoriLayananString.includes(lowerSearchTerm) ||
         jenisLayananString.includes(lowerSearchTerm) ||
-        statusString.includes(lowerSearchTerm)
+        statusString.includes(lowerSearchTerm) ||
+        jumlahString.includes(lowerSearchTerm) ||
+        hargaString.includes(lowerSearchTerm)
       );
     });
   }, [landingOrders, searchTerm]);
 
-  // Efek untuk mereset halaman ke 1 jika searchTerm berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // 2. Paginasi data yang sudah difilter
   const currentTableData = useMemo(() => {
     const firstPageIndex = (currentPage - 1) * ORDERS_PER_PAGE;
     const lastPageIndex = firstPageIndex + ORDERS_PER_PAGE;
@@ -116,13 +116,13 @@ export default function LandingPage() {
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo(0, 0); // Scroll ke atas halaman saat ganti halaman
+      window.scrollTo(0, 0);
     }
   };
 
   const renderPageNumbers = () => {
     const pageNumbers = [];
-    const maxVisiblePages = 3; // Jumlah tombol halaman yang terlihat di sekitar halaman aktif
+    const maxVisiblePages = 3;
 
     if (totalPages <= 1) return null;
 
@@ -130,7 +130,6 @@ export default function LandingPage() {
 
     if (totalPages > maxVisiblePages + 2) {
       if (currentPage > maxVisiblePages - 1 && maxVisiblePages > 1) {
-        // Penyesuaian untuk maxVisiblePages=1 atau 2
         if (currentPage > 2 && totalPages > 3) pageNumbers.push("...");
       }
 
@@ -168,7 +167,6 @@ export default function LandingPage() {
         }
       }
       if (currentPage < totalPages - maxVisiblePages && maxVisiblePages > 1) {
-        // Penyesuaian untuk maxVisiblePages=1 atau 2
         if (currentPage < totalPages - 1 && totalPages > 3)
           pageNumbers.push("...");
       }
@@ -319,6 +317,18 @@ export default function LandingPage() {
                       scope="col"
                       className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                     >
+                      Jumlah
+                    </th>
+                    <th
+                      scope="col"
+                      className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      Harga
+                    </th>
+                    <th
+                      scope="col"
+                      className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                    >
                       Status
                     </th>
                   </tr>
@@ -329,14 +339,13 @@ export default function LandingPage() {
                       (currentPage - 1) * ORDERS_PER_PAGE + index + 1;
                     return (
                       <tr
-                        key={order.id || order.nomor_urut}
+                        key={order.id || order.nomor_urut} // Pastikan key unik
                         className="hover:bg-gray-50"
                       >
-                        {" "}
-                        {/* Pastikan key unik */}
                         <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap font-medium text-gray-900 align-top">
                           {itemNumber}
                         </td>
+
                         {/* Kolom Gabungan untuk Mobile: Pelanggan */}
                         <td className="px-3 py-3 sm:px-4 sm:py-4 align-top md:hidden">
                           <div className="text-gray-800 font-medium">
@@ -346,6 +355,7 @@ export default function LandingPage() {
                             {order.nomor_hp || ""}
                           </div>
                         </td>
+
                         {/* Kolom Gabungan untuk Mobile: Status & Layanan */}
                         <td className="px-3 py-3 sm:px-4 sm:py-4 align-top md:hidden">
                           <div
@@ -370,7 +380,15 @@ export default function LandingPage() {
                               ? "Setrika Saja"
                               : "N/A"}
                           </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Jumlah: {order.jumlah}{" "}
+                            {order.kategori_layanan === "kiloan" ? "kg" : "pcs"}
+                          </div>
+                          <div className="text-xs text-gray-500 font-medium">
+                            Harga: {formatCurrency(order.harga || 0)}
+                          </div>
                         </td>
+
                         {/* Kolom Terpisah untuk Desktop */}
                         <td className="hidden md:table-cell px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-gray-800 align-top">
                           {order.nama_pelanggan || "N/A"}
@@ -393,6 +411,13 @@ export default function LandingPage() {
                             : order.jenis_layanan === "setrika_saja"
                             ? "Setrika Saja"
                             : "Tidak Diketahui"}
+                        </td>
+                        <td className="hidden md:table-cell px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-gray-500 align-top">
+                          {order.jumlah}{" "}
+                          {order.kategori_layanan === "kiloan" ? "kg" : "pcs"}
+                        </td>
+                        <td className="hidden md:table-cell px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-gray-500 align-top font-medium">
+                          {formatCurrency(order.harga || 0)}
                         </td>
                         <td className="hidden md:table-cell px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-gray-500 align-top">
                           <StatusBadge status={order.status} />

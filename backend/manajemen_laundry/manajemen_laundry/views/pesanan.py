@@ -277,7 +277,9 @@ def public_orders_list_view(request):
             Pesanan.nomor_hp,      
             Pesanan.kategori_layanan,
             Pesanan.jenis_layanan,
-            Pesanan.status
+            Pesanan.status,
+            Pesanan.jumlah,
+            Pesanan.harga,
         ).order_by(Pesanan.tanggal_masuk.desc())
 
         public_orders = []
@@ -289,6 +291,8 @@ def public_orders_list_view(request):
                 "kategori_layanan": row.kategori_layanan,
                 "jenis_layanan": row.jenis_layanan,
                 "status": row.status,
+                "jumlah": row.jumlah,
+                "harga": row.harga,
             })
         return HTTPOk(json_body=public_orders)
     except Exception as e:
