@@ -1,16 +1,18 @@
-import React, { useState, useMemo } from "react"; // Tambahkan useMemo
+import { useState, useMemo } from "react";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import StatusBadge from "./StatusBadge";
 import StatusEditor from "./StatusEditor";
 
-const ITEMS_PER_PAGE = 10; // Jumlah item per halaman
+const ITEMS_PER_PAGE = 10;
 
 export default function OrdersTable({
   orders,
   onUpdateStatus,
   onDeleteOrder,
   onAddOrder,
-  // onEditOrder, // Jika Anda akan menggunakannya nanti
+  // onEditOrder, // Prop onEditOrder tidak lagi digunakan
+  currentUser,
+  onDeleteOldOrders,
 }) {
   const [editStatusId, setEditStatusId] = useState(null);
   const [editStatus, setEditStatus] = useState("");
@@ -30,7 +32,6 @@ export default function OrdersTable({
     setEditStatusId(null);
   };
 
-  // Paginasi data
   const currentTableData = useMemo(() => {
     const firstPageIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const lastPageIndex = firstPageIndex + ITEMS_PER_PAGE;
@@ -42,7 +43,7 @@ export default function OrdersTable({
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo(0, 0); // Scroll ke atas
+      window.scrollTo(0, 0); // Scroll to top on page change
     }
   };
 
@@ -92,6 +93,7 @@ export default function OrdersTable({
           pageNumbers.push(i);
         }
       }
+
       if (currentPage < totalPages - maxVisiblePages && maxVisiblePages > 1) {
         if (currentPage < totalPages - 1 && totalPages > 3)
           pageNumbers.push("...");
@@ -101,9 +103,11 @@ export default function OrdersTable({
         pageNumbers.push(i);
       }
     }
+
     if (totalPages > 1) {
       pageNumbers.push(totalPages);
     }
+
     const uniquePageNumbers = [...new Set(pageNumbers)];
 
     return uniquePageNumbers.map((number, index) =>
@@ -133,17 +137,17 @@ export default function OrdersTable({
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center">
+        <div className="flex-1 min-w-0 mb-4 sm:mb-0">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 text-center sm:text-left">
             Data Pesanan Laundry
           </h3>
         </div>
-        {onAddOrder && (
-          <div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+          {onAddOrder && (
             <button
               onClick={onAddOrder}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors text-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center transition-colors text-sm whitespace-nowrap w-full"
             >
               <svg
                 className="w-5 h-5 mr-1"
@@ -161,8 +165,29 @@ export default function OrdersTable({
               </svg>
               Tambah Pesanan
             </button>
-          </div>
-        )}
+          )}
+          {currentUser?.role === "admin" && onDeleteOldOrders && (
+            <button
+              onClick={onDeleteOldOrders}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center justify-center transition-colors text-sm whitespace-nowrap w-full"
+              title="Hapus semua pesanan yang sudah selesai lebih dari 7 hari"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Hapus Pesanan Lama (7 hari)
+            </button>
+          )}
+        </div>
       </div>
 
       {orders.length === 0 ? (
@@ -173,7 +198,6 @@ export default function OrdersTable({
         <>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              {/* Desktop Headers */}
               <thead className="bg-gray-50 hidden md:table-header-group">
                 <tr>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
@@ -197,12 +221,12 @@ export default function OrdersTable({
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[190px]">
                     Tanggal & Catatan
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Aksi
                   </th>
                 </tr>
               </thead>
-              {/* Mobile Headers */}
+              {/* Mobile Header */}
               <thead className="bg-gray-50 md:hidden">
                 <tr>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -222,12 +246,12 @@ export default function OrdersTable({
                     (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
-                      {/* Kolom untuk semua tampilan */}
+                      {/* Common cell for No. */}
                       <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900 align-top">
                         {itemNumber}
                       </td>
 
-                      {/* Kolom untuk Mobile */}
+                      {/* Mobile specific cells */}
                       <td className="px-3 py-2 text-xs text-gray-700 align-top md:hidden">
                         <div className="font-medium">
                           {order.nama_pelanggan}
@@ -255,9 +279,9 @@ export default function OrdersTable({
                               : order.catatan}
                           </div>
                         )}
-                        <div className="mt-2">
-                          {" "}
-                          {/* Aksi untuk mobile */}
+                        {/* Tombol Aksi untuk Mobile */}
+                        <div className="mt-2 flex space-x-2">
+                          {/* Tombol Edit Pesanan Dihapus */}
                           <button
                             onClick={() => onDeleteOrder(order.id)}
                             className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors text-xs"
@@ -289,7 +313,7 @@ export default function OrdersTable({
                         </div>
                       </td>
 
-                      {/* Kolom untuk Desktop */}
+                      {/* Desktop specific cells */}
                       <td className="hidden md:table-cell px-3 py-2 text-xs text-gray-700 align-top">
                         <div>
                           <div className="font-medium">
@@ -353,25 +377,27 @@ export default function OrdersTable({
                         )}
                       </td>
                       <td className="hidden md:table-cell px-3 py-2 whitespace-nowrap text-xs text-gray-500 text-center align-top">
-                        <button
-                          onClick={() => onDeleteOrder(order.id)}
-                          className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
-                          title="Hapus Pesanan"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-3 w-3"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                        <div className="flex space-x-1 justify-center">
+                          {/* Tombol Edit Pesanan Dihapus */}
+                          <button
+                            onClick={() => onDeleteOrder(order.id)}
+                            className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
+                            title="Hapus Pesanan"
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
-                        {/* Tombol Edit bisa ditambahkan di sini jika diperlukan */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-3 w-3"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -379,7 +405,6 @@ export default function OrdersTable({
               </tbody>
             </table>
           </div>
-          {/* Kontrol Pagination */}
           {totalPages > 1 && (
             <div className="py-3 px-4 sm:px-6 flex items-center justify-between border-t border-gray-200">
               <button

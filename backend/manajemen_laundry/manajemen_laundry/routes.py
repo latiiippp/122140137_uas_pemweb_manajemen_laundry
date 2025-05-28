@@ -29,5 +29,10 @@ def includeme(config):
     config.add_route('pesanan_preflight', '/pesanan', request_method='OPTIONS')
     config.add_route('pesanan_detail_preflight', '/pesanan/{id}', request_method='OPTIONS')
 
+    # Rute untuk publik
     config.add_route('public_orders_list', '/orders', request_method='GET')
     config.add_route('public_orders_preflight', '/orders', request_method='OPTIONS')
+
+    # Rute untuk delete pesanan selesai berumur 7 hari
+    config.add_route('pesanan_delete_old_completed', '/delete_old_orders_completed', request_method='POST')
+    config.add_route('pesanan_delete_old_completed_preflight', '/delete_old_orders_completed', request_method='OPTIONS')

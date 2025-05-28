@@ -10,7 +10,8 @@ from pyramid.httpexceptions import (
     HTTPUnauthorized
 )
 import transaction
-import math # Untuk math.ceil
+import math
+from datetime import datetime, timedelta
 
 from ..models import Pesanan, Users
 
@@ -300,5 +301,44 @@ def public_orders_list_view(request):
 
 @view_config(route_name='public_orders_preflight', request_method='OPTIONS')
 def public_orders_preflight_view(request):
+    response = Response()
+    return response
+
+@view_config(route_name='pesanan_delete_old_completed', request_method='POST', renderer='json')
+def delete_old_completed_orders_view(request):
+    current_user_payload = get_current_user_from_token(request)
+
+    if not current_user_payload:
+        return HTTPUnauthorized(json_body={'message': 'Otentikasi diperlukan. Token tidak valid atau tidak ada.'})
+    
+    user_role = current_user_payload.get('role')
+    if user_role != 'admin': # Hanya admin yang boleh
+        return HTTPForbidden(json_body={'message': 'Anda tidak memiliki izin untuk melakukan tindakan ini.'})
+
+    try:
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        query_to_delete = request.dbsession.query(Pesanan).filter(
+            Pesanan.status == 'selesai',
+            Pesanan.tanggal_keluar != None,
+            Pesanan.tanggal_keluar < seven_days_ago
+        )
+        
+        orders_to_delete = query_to_delete.all()
+        count_deleted = len(orders_to_delete)
+
+        if count_deleted == 0:
+            return HTTPOk(json_body={'message': 'Tidak ada pesanan lama yang selesai untuk dihapus.'})
+
+        with transaction.manager:
+            for order in orders_to_delete:
+                request.dbsession.delete(order)
+        
+        return HTTPOk(json_body={'message': f'{count_deleted} pesanan lama yang telah selesai berhasil dihapus.'})
+
+    except Exception as e:
+        return HTTPBadRequest(json_body={'error': f"Terjadi kesalahan: {str(e)}"})
+
+@view_config(route_name='pesanan_delete_old_completed_preflight', request_method='OPTIONS')
+def delete_old_completed_orders_preflight_view(request):
     response = Response()
     return response

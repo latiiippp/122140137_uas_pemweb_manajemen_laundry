@@ -1,29 +1,41 @@
 import { useState, useMemo } from "react";
 import { useOrders } from "../context/useOrder";
+import { useAuth } from "../context/useAuth";
+import api from "../services/api";
 import Sidebar from "../components/layout/Sidebar";
 import PageHeader from "../components/layout/PageHeader";
 import OrdersTable from "../components/order/OrdersTable";
-import DeleteOrderModal from "../components/order/DeleteOrderModal";
+import DeleteOrderModal from "../components/order/DeleteOrderModal"; // Nama tetap, tapi fungsinya lebih generik
 import SearchBar from "../components/order/SearchBar";
 import OrderForm from "../components/order/OrderForm";
 
 export default function OrdersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState(null);
+  // State untuk modal konfirmasi generik
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [confirmationModalTitle, setConfirmationModalTitle] = useState("");
+  const [confirmationModalMessage, setConfirmationModalMessage] = useState("");
+  const [onConfirmationModalConfirm, setOnConfirmationModalConfirm] =
+    useState(null); // Akan menyimpan fungsi () => {}
+
+  const [orderToDelete, setOrderToDelete] = useState(null); // Tetap dibutuhkan untuk menghapus order spesifik
   const [searchTerm, setSearchTerm] = useState("");
   const [orderFormOpen, setOrderFormOpen] = useState(false);
   const [currentOrderToEdit, setCurrentOrderToEdit] = useState(null);
 
-  const { orders, loading, error, updateOrderStatus, deleteOrder } =
-    useOrders();
+  const {
+    orders,
+    loading,
+    error,
+    updateOrderStatus,
+    deleteOrder,
+    fetchOrders,
+  } = useOrders();
+  const { user: currentUser } = useAuth();
 
-  // Fungsi untuk mencari dan mengurutkan pesanan
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) return [];
-
     const lowerSearchTerm = searchTerm.toLowerCase();
-
     const filtered = orders.filter((order) => {
       const orderIdString =
         order.id != null ? String(order.id).toLowerCase() : "";
@@ -38,7 +50,6 @@ export default function OrdersPage() {
       const jenisLayanan = order.jenis_layanan
         ? order.jenis_layanan.toLowerCase()
         : "";
-
       return (
         orderIdString.includes(lowerSearchTerm) ||
         customerName.includes(lowerSearchTerm) ||
@@ -48,13 +59,11 @@ export default function OrdersPage() {
         jenisLayanan.includes(lowerSearchTerm)
       );
     });
-
     return [...filtered].sort(
       (a, b) => new Date(b.tanggal_masuk || 0) - new Date(a.tanggal_masuk || 0)
     );
   }, [orders, searchTerm]);
 
-  // Handler untuk konfirmasi update status
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       await updateOrderStatus(id, newStatus);
@@ -63,34 +72,82 @@ export default function OrdersPage() {
     }
   };
 
-  // Handler untuk menampilkan modal konfirmasi hapus
-  const handleOpenDeleteModal = (orderId) => {
-    // Menerima orderId
-    setOrderToDelete(orderId);
-    setShowDeleteModal(true);
+  const handleCloseConfirmationModal = () => {
+    setIsConfirmationModalOpen(false);
+    setConfirmationModalTitle("");
+    setConfirmationModalMessage("");
+    setOnConfirmationModalConfirm(null);
+    setOrderToDelete(null); // Reset orderToDelete juga
   };
 
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setOrderToDelete(null);
-  };
-
-  // Handler untuk konfirmasi hapus
-  const handleDeleteConfirm = async () => {
+  const handleActualDeleteOrder = async () => {
     if (orderToDelete) {
       try {
-        await deleteOrder(orderToDelete); // Menggunakan orderToDelete (ID)
-        handleCloseDeleteModal();
+        await deleteOrder(orderToDelete);
+        // fetchOrders(); // useOrders context seharusnya sudah menangani ini
       } catch (err) {
         console.error("Gagal menghapus pesanan:", err);
-        handleCloseDeleteModal();
+        alert("Gagal menghapus pesanan.");
       }
     }
   };
 
-  // Handler untuk menampilkan form tambah/edit pesanan
+  // Untuk menghapus satu pesanan
+  const handleOpenDeleteOrderModal = (orderId) => {
+    setOrderToDelete(orderId);
+    setConfirmationModalTitle("Konfirmasi Hapus Pesanan");
+    setConfirmationModalMessage(
+      "Apakah Anda yakin ingin menghapus pesanan ini? Tindakan ini tidak dapat dibatalkan."
+    );
+    // Bungkus aksi dalam fungsi agar bisa dipanggil oleh setOnConfirmationModalConfirm
+    setOnConfirmationModalConfirm(() => () => handleActualDeleteOrder());
+    setIsConfirmationModalOpen(true);
+  };
+
+  const handleActualDeleteOldOrders = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        alert("Otentikasi diperlukan. Silakan login kembali.");
+        return;
+      }
+      const response = await api.post(
+        "/delete_old_orders_completed",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert(response.data.message);
+      if (fetchOrders) {
+        fetchOrders();
+      }
+    } catch (err) {
+      console.error(
+        "Gagal menghapus pesanan lama:",
+        err.response?.data?.error || err.message
+      );
+      alert(
+        `Gagal menghapus pesanan lama: ${
+          err.response?.data?.error || err.message
+        }`
+      );
+    }
+  };
+
+  // Untuk menghapus pesanan lama
+  const handleDeleteOldCompletedOrders = () => {
+    setConfirmationModalTitle("Konfirmasi Hapus Pesanan Lama");
+    setConfirmationModalMessage(
+      "Anda yakin ingin menghapus semua pesanan selesai yang berumur lebih dari 7 hari? Tindakan ini tidak dapat diurungkan."
+    );
+    setOnConfirmationModalConfirm(() => () => handleActualDeleteOldOrders());
+    setIsConfirmationModalOpen(true);
+  };
+
   const handleOpenOrderForm = (order = null) => {
-    // Menerima order untuk edit
     setCurrentOrderToEdit(order);
     setOrderFormOpen(true);
   };
@@ -100,7 +157,8 @@ export default function OrdersPage() {
     setCurrentOrderToEdit(null);
   };
 
-  if (loading) {
+  if (loading && !orders.length) {
+    // Tampilkan loading hanya jika belum ada data sama sekali
     return (
       <div className="flex justify-center items-center min-h-screen">
         Memuat data pesanan...
@@ -118,30 +176,25 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col lg:ml-64">
         <PageHeader
-          title="Data Pesanan" // Judul dari kode Anda sebelumnya
+          title="Data Pesanan"
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        ></PageHeader>
-
+        />
         <main className="p-4">
-          {/* Search Bar */}
-          <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
+          <div className="mb-4">
+            <SearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
+          </div>
 
-          {/* Indikator hasil pencarian jika ada kata kunci pencarian */}
           {searchTerm && (
             <div className="mb-4 flex items-center text-sm text-gray-600">
               <span>
                 Menampilkan {filteredOrders.length} hasil untuk "{searchTerm}"
               </span>
-              {/* Tombol reset hanya tampil jika ada hasil atau searchTerm tidak kosong */}
               {(filteredOrders.length > 0 || searchTerm) && (
                 <button
                   onClick={() => setSearchTerm("")}
@@ -153,34 +206,38 @@ export default function OrdersPage() {
             </div>
           )}
 
-          {/* Tabel Pesanan */}
           <OrdersTable
             orders={filteredOrders}
             onUpdateStatus={handleUpdateStatus}
-            onDeleteOrder={handleOpenDeleteModal}
+            onDeleteOrder={handleOpenDeleteOrderModal} // Menggunakan handler baru
             onAddOrder={() => handleOpenOrderForm()}
             onEditOrder={handleOpenOrderForm}
+            currentUser={currentUser}
+            onDeleteOldOrders={handleDeleteOldCompletedOrders} // Ini akan membuka modal
           />
         </main>
       </div>
 
-      {/* Modal konfirmasi hapus */}
       <DeleteOrderModal
-        isOpen={showDeleteModal}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleDeleteConfirm}
+        isOpen={isConfirmationModalOpen}
+        onClose={handleCloseConfirmationModal}
+        onConfirm={() => {
+          if (typeof onConfirmationModalConfirm === "function") {
+            const actionToRun = onConfirmationModalConfirm(); // Dapatkan fungsi sebenarnya
+            if (typeof actionToRun === "function") {
+              actionToRun(); // Jalankan fungsi sebenarnya
+            }
+          }
+          handleCloseConfirmationModal(); // Selalu tutup modal setelah konfirmasi
+        }}
+        title={confirmationModalTitle}
+        message={confirmationModalMessage}
       />
-
-      {/* Form tambah pesanan */}
       <OrderForm
         isOpen={orderFormOpen}
         onClose={handleCloseOrderForm}
         orderToEdit={currentOrderToEdit}
       />
-
-      <div className="fixed bottom-4 right-4">
-        <div className="h-1 w-20 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-full"></div>
-      </div>
     </div>
   );
 }
