@@ -278,7 +278,7 @@ def public_orders_list_view(request):
             Pesanan.kategori_layanan,
             Pesanan.jenis_layanan,
             Pesanan.status
-        ).order_by(Pesanan.tanggal_masuk.desc()).limit(5)
+        ).order_by(Pesanan.tanggal_masuk.desc())
 
         public_orders = []
         for row in query:
