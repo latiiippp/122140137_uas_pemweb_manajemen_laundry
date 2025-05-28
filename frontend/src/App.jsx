@@ -3,10 +3,11 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import OrdersPage from "./pages/OrdersPage";
 import UsersPage from "./pages/UsersPage";
+import LandingPage from "./pages/LandingPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
 import { OrderProvider } from "./context/OrderProvider";
-import { UserProvider } from "./context/UserProvider"; // Import UserProvider
+import { UserProvider } from "./context/UserProvider";
 import { useAuth } from "./context/useAuth";
 
 function AppRoutes() {
@@ -14,6 +15,8 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+
       <Route
         path="/login"
         element={user ? <Navigate to="/dashboard" /> : <LoginPage />}
@@ -46,8 +49,11 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+      {/* 3. HAPUS atau KOMENTARI route lama untuk "/" yang mengarah ke login */}
+      {/* <Route path="/" element={<Navigate to="/login" />} /> */}
+
+      {/* 4. Ubah fallback route ke LandingPage (atau halaman 404 jika ada) */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

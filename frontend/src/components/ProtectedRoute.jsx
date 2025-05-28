@@ -7,7 +7,7 @@ export default function ProtectedRoute({ children }) {
 
   if (!user) {
     // Redirect to login if not authenticated
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // Render children if authenticated

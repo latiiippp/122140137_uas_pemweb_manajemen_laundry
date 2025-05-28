@@ -28,3 +28,6 @@ def includeme(config):
     config.add_route('pesanan_delete', '/pesanan/{id}', request_method='DELETE') # Menghapus pesanan
     config.add_route('pesanan_preflight', '/pesanan', request_method='OPTIONS')
     config.add_route('pesanan_detail_preflight', '/pesanan/{id}', request_method='OPTIONS')
+
+    config.add_route('public_orders_list', '/orders', request_method='GET')
+    config.add_route('public_orders_preflight', '/orders', request_method='OPTIONS')

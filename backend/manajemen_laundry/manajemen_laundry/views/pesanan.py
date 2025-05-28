@@ -267,3 +267,34 @@ def pesanan_detail_preflight_view(request):
     """Menangani preflight OPTIONS request untuk /pesanan/{id}."""
     response = Response()
     return response
+
+@view_config(route_name='public_orders_list', request_method='GET', renderer='json')
+def public_orders_list_view(request):
+    try:
+        query = request.dbsession.query(
+            Pesanan.id,
+            Pesanan.nama_pelanggan,
+            Pesanan.nomor_hp,      
+            Pesanan.kategori_layanan,
+            Pesanan.jenis_layanan,
+            Pesanan.status
+        ).order_by(Pesanan.tanggal_masuk.desc()).limit(5)
+
+        public_orders = []
+        for row in query:
+            public_orders.append({
+                "id": row.id,
+                "nama_pelanggan": row.nama_pelanggan,
+                "nomor_hp": row.nomor_hp,
+                "kategori_layanan": row.kategori_layanan,
+                "jenis_layanan": row.jenis_layanan,
+                "status": row.status,
+            })
+        return HTTPOk(json_body=public_orders)
+    except Exception as e:
+        return HTTPBadRequest(json_body={'error': f"Terjadi kesalahan: {str(e)}"})
+
+@view_config(route_name='public_orders_preflight', request_method='OPTIONS')
+def public_orders_preflight_view(request):
+    response = Response()
+    return response

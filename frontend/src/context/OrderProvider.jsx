@@ -1,19 +1,27 @@
-import { useState, useEffect, useCallback, useContext } from "react";
-import { OrderContext } from "./orderContext";
+import React, { useState, useEffect, useCallback, useContext } from "react";
+import { OrderContext } from "./orderContext"; // Pastikan impor ini benar dari file orderContext.js
 import api from "../services/api";
-import { AuthContext } from "./authContext";
+import { AuthContext } from "./authContext"; // Impor AuthContext
 
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Loading untuk data pesanan
   const [error, setError] = useState(null);
-  const { token: authToken } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext); // Gunakan isAuthenticated dan user dari AuthContext
 
   // Fungsi untuk memuat pesanan dari backend
   const loadOrders = useCallback(async () => {
+    // Hanya muat pesanan jika pengguna terautentikasi dan user object ada
+    if (!isAuthenticated || !user) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
+      // Asumsi instance 'api' sudah dikonfigurasi untuk mengirim token
       const response = await api.get("/pesanan");
       setOrders(
         response.data.pesanan || response.data.orders || response.data || []
@@ -32,39 +40,36 @@ export function OrderProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, user]); // loadOrders akan dibuat ulang jika isAuthenticated atau user berubah
 
+  // useEffect untuk memanggil loadOrders saat komponen mount atau isAuthenticated/user berubah
   useEffect(() => {
-    const tokenToUse = authToken || sessionStorage.getItem("token");
-    if (tokenToUse) {
-      loadOrders();
-    } else {
-      setLoading(false);
-      setOrders([]);
-    }
-  }, [loadOrders, authToken]);
+    loadOrders();
+  }, [loadOrders]); // Panggil loadOrders saat fungsi loadOrders (atau dependensinya) berubah
 
   // Fungsi untuk menambah pesanan baru ke backend
   const addOrder = async (newOrderData) => {
+    if (!isAuthenticated) throw new Error("Autentikasi diperlukan.");
     setError(null);
     try {
       const response = await api.post("/pesanan", newOrderData);
-      await loadOrders();
+      await loadOrders(); // Muat ulang pesanan setelah menambah
       return response.data;
     } catch (err) {
       console.error("Failed to add order:", err);
-      setError(
+      const errorMessage =
         err.response?.data?.message ||
-          err.response?.data?.detail ||
-          err.message ||
-          "Gagal menambah pesanan."
-      );
-      throw err;
+        err.response?.data?.detail ||
+        err.message ||
+        "Gagal menambah pesanan.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   // Fungsi untuk update catatan pesanan di backend
   const updateOrderNotes = async (orderId, notes) => {
+    if (!isAuthenticated) throw new Error("Autentikasi diperlukan.");
     setError(null);
     try {
       const response = await api.put(`/pesanan/${orderId}`, { catatan: notes });
@@ -78,18 +83,19 @@ export function OrderProvider({ children }) {
       return response.data;
     } catch (err) {
       console.error("Failed to update order notes:", err);
-      setError(
+      const errorMessage =
         err.response?.data?.message ||
-          err.response?.data?.detail ||
-          err.message ||
-          "Gagal memperbarui catatan pesanan."
-      );
-      throw err;
+        err.response?.data?.detail ||
+        err.message ||
+        "Gagal memperbarui catatan pesanan.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   // Fungsi untuk update status pesanan di backend
   const updateOrderStatus = async (orderId, newStatus) => {
+    if (!isAuthenticated) throw new Error("Autentikasi diperlukan.");
     setError(null);
     try {
       const response = await api.put(`/pesanan/${orderId}`, {
@@ -105,18 +111,19 @@ export function OrderProvider({ children }) {
       return response.data;
     } catch (err) {
       console.error("Failed to update order status:", err);
-      setError(
+      const errorMessage =
         err.response?.data?.message ||
-          err.response?.data?.detail ||
-          err.message ||
-          "Gagal memperbarui status pesanan."
-      );
-      throw err;
+        err.response?.data?.detail ||
+        err.message ||
+        "Gagal memperbarui status pesanan.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   // Fungsi untuk menghapus pesanan dari backend
   const deleteOrder = async (orderId) => {
+    if (!isAuthenticated) throw new Error("Autentikasi diperlukan.");
     setError(null);
     try {
       await api.delete(`/pesanan/${orderId}`);
@@ -125,18 +132,18 @@ export function OrderProvider({ children }) {
       );
     } catch (err) {
       console.error("Failed to delete order:", err);
-      setError(
+      const errorMessage =
         err.response?.data?.message ||
-          err.response?.data?.detail ||
-          err.message ||
-          "Gagal menghapus pesanan."
-      );
-      throw err;
+        err.response?.data?.detail ||
+        err.message ||
+        "Gagal menghapus pesanan.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  // Fungsi untuk mendapatkan statistik pesanan (tetap bisa dari state frontend)
-  const getOrderStats = () => {
+  // Fungsi untuk mendapatkan statistik pesanan
+  const getOrderStats = useCallback(() => {
     const statusProcessing = "dilaundry";
     const statusReady = "siap_diambil";
 
@@ -151,7 +158,7 @@ export function OrderProvider({ children }) {
         (order) => order && order.status === statusReady
       ).length,
     };
-  };
+  }, [orders]);
 
   return (
     <OrderContext.Provider
