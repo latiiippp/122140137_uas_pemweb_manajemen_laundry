@@ -1,34 +1,20 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useContext, // Tambahkan useContext
-} from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { OrderContext } from "./orderContext";
-// Hapus import data dummy:
-// import { RECENT_ORDERS } from "../data/orders";
-// import { ORDER_STATUS } from "../data/constants"; // Anda mungkin masih memerlukan ini jika status di frontend berbeda dari backend
-// atau jika Anda ingin memvalidasi status.
-// Untuk sekarang, kita asumsikan status dari backend adalah string.
-import api from "../services/api"; // Impor instance axios
-import { AuthContext } from "./authContext"; // Impor AuthContext
+import api from "../services/api";
+import { AuthContext } from "./authContext";
 
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true); // State untuk loading
-  const [error, setError] = useState(null); // State untuk error
-  const { token: authToken } = useContext(AuthContext); // Ambil token
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { token: authToken } = useContext(AuthContext);
 
   // Fungsi untuk memuat pesanan dari backend
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Pastikan path '/pesanan' sudah benar sesuai rute backend dan baseURL di api.js
       const response = await api.get("/pesanan");
-      // Sesuaikan dengan struktur respons backend Anda
-      // Jika backend mengembalikan { "pesanan": [...] } atau { "orders": [...] }
-      // atau array langsung [...]
       setOrders(
         response.data.pesanan || response.data.orders || response.data || []
       );
@@ -55,23 +41,16 @@ export function OrderProvider({ children }) {
     } else {
       setLoading(false);
       setOrders([]);
-      // setError("Silakan login untuk melihat data pesanan."); // Opsional
     }
   }, [loadOrders, authToken]);
 
   // Fungsi untuk menambah pesanan baru ke backend
   const addOrder = async (newOrderData) => {
     setError(null);
-    // setLoading(true); // Opsional, loadOrders akan set loading
     try {
-      // newOrderData harus berisi semua field yang dibutuhkan backend
-      // seperti nama_pelanggan, no_hp, layanan_id, berat, dll.
-      // Backend akan meng-generate ID dan entryDate
       const response = await api.post("/pesanan", newOrderData);
-      await loadOrders(); // Muat ulang semua pesanan untuk mendapatkan data terbaru
-      // Atau, tambahkan respons ke state secara optimis jika backend mengembalikan pesanan yang baru dibuat:
-      // setOrders((prevOrders) => [response.data.pesanan || response.data, ...prevOrders]);
-      return response.data; // Kembalikan data pesanan yang baru dibuat dari backend
+      await loadOrders();
+      return response.data;
     } catch (err) {
       console.error("Failed to add order:", err);
       setError(
@@ -80,7 +59,6 @@ export function OrderProvider({ children }) {
           err.message ||
           "Gagal menambah pesanan."
       );
-      // setLoading(false);
       throw err;
     }
   };
@@ -89,10 +67,7 @@ export function OrderProvider({ children }) {
   const updateOrderNotes = async (orderId, notes) => {
     setError(null);
     try {
-      // Backend mungkin mengharapkan seluruh objek pesanan atau hanya field yang diupdate
-      // Asumsi backend menerima { catatan: "notes baru" } atau seluruh objek dengan catatan baru
       const response = await api.put(`/pesanan/${orderId}`, { catatan: notes });
-      // Update state secara optimis atau panggil loadOrders()
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
@@ -100,7 +75,6 @@ export function OrderProvider({ children }) {
             : order
         )
       );
-      // await loadOrders();
       return response.data;
     } catch (err) {
       console.error("Failed to update order notes:", err);
@@ -118,13 +92,9 @@ export function OrderProvider({ children }) {
   const updateOrderStatus = async (orderId, newStatus) => {
     setError(null);
     try {
-      // Backend mungkin mengharapkan seluruh objek pesanan atau hanya field yang diupdate
-      // Asumsi backend menerima { status: "status_baru" } atau seluruh objek dengan status baru
-      // Backend juga bisa menangani 'completionDate' jika statusnya 'selesai'
       const response = await api.put(`/pesanan/${orderId}`, {
         status: newStatus,
       });
-      // Update state secara optimis atau panggil loadOrders()
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
@@ -132,7 +102,6 @@ export function OrderProvider({ children }) {
             : order
         )
       );
-      // await loadOrders();
       return response.data;
     } catch (err) {
       console.error("Failed to update order status:", err);
@@ -151,11 +120,9 @@ export function OrderProvider({ children }) {
     setError(null);
     try {
       await api.delete(`/pesanan/${orderId}`);
-      // Hapus dari state secara optimis atau panggil loadOrders()
       setOrders((prevOrders) =>
         prevOrders.filter((order) => order.id !== orderId)
       );
-      // await loadOrders();
     } catch (err) {
       console.error("Failed to delete order:", err);
       setError(
@@ -170,10 +137,8 @@ export function OrderProvider({ children }) {
 
   // Fungsi untuk mendapatkan statistik pesanan (tetap bisa dari state frontend)
   const getOrderStats = () => {
-    // Pastikan nilai status ini sesuai dengan yang ada di backend Anda
-    // Misal: 'diproses', 'siap_diambil', 'selesai'
-    const statusProcessing = "dilaundry"; // Ganti dengan nilai status dari backend
-    const statusReady = "siap_diambil"; // Ganti dengan nilai status dari backend
+    const statusProcessing = "dilaundry";
+    const statusReady = "siap_diambil";
 
     if (!Array.isArray(orders)) {
       return { activeOrders: 0, readyForPickup: 0 };
@@ -192,9 +157,9 @@ export function OrderProvider({ children }) {
     <OrderContext.Provider
       value={{
         orders,
-        loading, // Sediakan loading state
-        error, // Sediakan error state
-        loadOrders, // Mungkin perlu diekspos jika ingin refresh manual dari komponen
+        loading,
+        error,
+        loadOrders,
         addOrder,
         updateOrderStatus,
         updateOrderNotes,

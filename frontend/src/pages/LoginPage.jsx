@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useAuth } from "../context/useAuth"; // Anda sudah menggunakan custom hook, ini bagus!
+import { useAuth } from "../context/useAuth";
 import { useNavigate } from "react-router-dom";
 import LoginHeader from "../components/login/LoginHeader";
 import LoginForm from "../components/login/LoginForm";
 
 export default function LoginPage() {
-  // Ambil juga fungsi logout jika Anda ingin membersihkan state AuthProvider secara eksplisit
   const { login, logout: authLogout } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -42,18 +41,15 @@ export default function LoginPage() {
           authLogout();
         }
       } else {
-        // Ini kondisi error jika backend mengembalikan token tapi tidak ada userDetails atau role
         console.error(
           "Login berhasil tetapi tidak ada detail user atau role yang valid."
         );
         setError(
           "Gagal memproses detail pengguna setelah login. Silakan coba lagi."
         );
-        // Mungkin juga panggil authLogout() di sini
         authLogout();
       }
     } catch (err) {
-      // Error dari AuthProvider.login
       setError(err.message || "Login gagal. Periksa kredensial Anda.");
     } finally {
       setLoading(false);

@@ -9,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// Add auth interceptor - ubah localStorage menjadi sessionStorage
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
   if (token) {

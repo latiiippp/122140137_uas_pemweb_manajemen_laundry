@@ -4,8 +4,8 @@ import { AuthContext } from "./authContext";
 import { UserContext } from "./userContext";
 export function UserProvider({ children }) {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true); // Untuk loading awal
-  const [error, setError] = useState(null); // Untuk menangani error API
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { token: authToken } = useContext(AuthContext);
 
   const fetchUsers = useCallback(async () => {
@@ -84,7 +84,6 @@ export function UserProvider({ children }) {
     setError(null);
     try {
       await api.delete(`/users/${userId}`);
-      // Hapus user dari state secara manual
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
     } catch (err) {
       console.error("Failed to delete user:", err);
