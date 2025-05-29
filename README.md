@@ -129,7 +129,6 @@ Berikut adalah daftar dependensi utama yang dibutuhkan untuk menjalankan aplikas
 - [Dokumentasi Pyramid Web Framework](https://docs.pylonsproject.org/projects/pyramid/en/latest/)
 - [Dokumentasi SQLAlchemy](https://docs.sqlalchemy.org/en/14/)
 - [Dokumentasi Tailwind CSS](https://tailwindcss.com/docs)
-- (Tambahkan referensi lain yang relevan, misalnya tutorial yang diikuti, pustaka penting, dll.)
 
 ---
 
