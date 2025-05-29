@@ -1,4 +1,4 @@
-# Sistem Manajemen Laundry XYZ
+# Sistem Manajemen Laundry _Laundry Express_
 
 ## Deskripsi Aplikasi Web
 
@@ -133,9 +133,6 @@ Berikut adalah daftar dependensi utama yang dibutuhkan untuk menjalankan aplikas
 
 ---
 
-**Catatan:**
+### Pengembang
 
-- Ganti "XYZ" dengan nama sebenarnya dari aplikasi Anda jika berbeda.
-- Lengkapi bagian "Fitur Tambahan (Potensial)" jika ada fitur lain yang sudah atau akan diimplementasikan.
-- Pastikan path dan nama file (seperti `development.ini.example`, `api.js`) sesuai dengan struktur proyek Anda.
-- Jika ada langkah konfigurasi spesifik lainnya, tambahkan ke bagian "Cara Menjalankan Aplikasi".
+- Ikhsannudin Lathief - 122140137
