@@ -137,13 +137,14 @@ def user_update_view(request):
         # Update password jika ada
         if 'password' in json_data and json_data['password']: # Password tidak boleh kosong
             user.set_password(json_data['password'])
+            
+        # TAMBAHKAN KODE INI: Commit perubahan ke database
+        with transaction.manager:
+            dbsession.add(user)  # SQLAlchemy akan menangani ini sebagai update
                 
         return {'success': True, 'user': user.to_dict()}
         
     except Exception as e:
-        # import logging
-        # log = logging.getLogger(__name__)
-        # log.error(f"Error updating user {user_id}: {e}", exc_info=True)
         return HTTPBadRequest(json_body={'error': 'Terjadi kesalahan saat mengupdate user'})
 
 
